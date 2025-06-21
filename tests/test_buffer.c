@@ -1,5 +1,5 @@
-#include "all_tests.h"
 #include "buffer.h"
+#include "test_runner.h"
 #include "unity.h"
 
 void test_buffer_chunk(void) {
@@ -78,4 +78,12 @@ void test_buffer_destory(void) {
     TEST_ASSERT_EQUAL(0, buffer.size);
     TEST_ASSERT_EQUAL(0, buffer.capacity);
     TEST_ASSERT_EQUAL(0, buffer.data);
+}
+
+void test_runner_buffer() {
+    RUN_TEST(test_buffer_chunk);
+    RUN_TEST(test_buffer_init);
+    RUN_TEST(test_buffer_grow);
+    RUN_TEST(test_buffer_append);
+    RUN_TEST(test_buffer_destory);
 }
