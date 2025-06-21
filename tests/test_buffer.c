@@ -1,8 +1,8 @@
-#include "buffer.h"
-#include "test_runner.h"
-#include "unity.h"
+#include <buffer.h>
 
-void test_buffer_chunk(void) {
+#include "test_runner.h"
+
+void test_buffer_chunk() {
     size_t expected = BUFFER_CHUNK_SIZE;
     TEST_ASSERT_EQUAL(expected, buffer_ensure_chunk_multiple(0));
     TEST_ASSERT_EQUAL(expected, buffer_ensure_chunk_multiple(1));
@@ -15,7 +15,7 @@ void test_buffer_chunk(void) {
                       buffer_ensure_chunk_multiple(BUFFER_CHUNK_SIZE + BUFFER_CHUNK_SIZE));
 }
 
-void test_buffer_init(void) {
+void test_buffer_init() {
     struct buffer buffer;
 
     // fill with random data
@@ -29,7 +29,7 @@ void test_buffer_init(void) {
     TEST_ASSERT_EQUAL(0, buffer.data);
 }
 
-void test_buffer_grow(void) {
+void test_buffer_grow() {
     struct buffer buffer;
     buffer_init(&buffer);
 
@@ -44,7 +44,7 @@ void test_buffer_grow(void) {
     TEST_ASSERT_NOT_EQUAL(0, buffer.data);
 }
 
-void test_buffer_append(void) {
+void test_buffer_append() {
     struct buffer buffer;
     buffer_init(&buffer);
 
@@ -66,7 +66,7 @@ void test_buffer_append(void) {
     TEST_ASSERT_EQUAL_CHAR_ARRAY(world, &buffer.data[5], 5);
 }
 
-void test_buffer_destory(void) {
+void test_buffer_destory() {
     struct buffer buffer;
     buffer_init(&buffer);
 
