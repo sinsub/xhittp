@@ -13,6 +13,7 @@ void http_request_init(struct http_request *request) {
     request->parser_context.start = 0;
     request->parser_context.current = 0;
     request->method = NULL;
+    request->response_code = HSC_000;
 }
 
 void http_request_destory(struct http_request *request) {
@@ -26,19 +27,26 @@ void http_request_read(struct http_request *request, void *buffer, size_t length
 }
 
 static const char *const http_methods[] = {"GET", "HEAD", NULL};
+static const size_t max_http_method_length = 4;
 
-static enum http_request_state validate_method(char *method) {
+static void http_error(struct http_request *request, enum http_status_code code) {
+    request->state = HRS_ERROR;
+    request->response_code = code;
+}
+
+static void validate_method(struct http_request *request) {
+    char *method = request->method;
     if (strlen(method)) {
         for (int i = 0; http_methods[i]; ++i) {
             if (strcmp(http_methods[i], method) == 0) {
-                return HRS_URI;
+                request->state = HRS_URI;
+                return;
             }
         }
     }
-    return HRS_ERROR;
+    http_error(request, HSC_501);  // method not supported
 }
 
-// TODO put a limit on length of method while parsing
 static void http_prase_continue_parse_req_line(struct http_request *request) {
     // while there are characters to read
     while (request->state <= HRS_HTTP_VERSION &&
@@ -51,9 +59,11 @@ static void http_prase_continue_parse_req_line(struct http_request *request) {
                     request->buffer.data[i] = '\0';
                     request->method = &request->buffer.data[request->parser_context.start];
                     request->parser_context.start = request->parser_context.current;
-                    request->state = validate_method(request->method);
+                    validate_method(request);
                 } else if (!is_tchar(c)) {
-                    request->state = HRS_ERROR;
+                    http_error(request, HSC_400);  // bad request
+                } else if (i - request->parser_context.start > max_http_method_length) {
+                    http_error(request, HSC_501);  // method not supported
                 }
             } break;
             case HRS_URI:

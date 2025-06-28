@@ -12,6 +12,7 @@ void test_http_request_init() {
     TEST_ASSERT_EQUAL(0, request.parser_context.start);
     TEST_ASSERT_EQUAL(0, request.parser_context.current);
     TEST_ASSERT_EQUAL(NULL, request.method);
+    TEST_ASSERT_EQUAL(HSC_000, request.response_code);
 }
 
 void test_http_request_read_incomplete_method() {
@@ -27,6 +28,7 @@ void test_http_request_read_incomplete_method() {
     TEST_ASSERT_EQUAL(0, request.parser_context.start);
     TEST_ASSERT_EQUAL(0, request.parser_context.current);
     TEST_ASSERT_EQUAL(NULL, request.method);
+    TEST_ASSERT_EQUAL(HSC_000, request.response_code);
 
     http_request_read(&request, buffer, 1);
     TEST_ASSERT_EQUAL(HRS_METHOD, request.state);
@@ -37,6 +39,7 @@ void test_http_request_read_incomplete_method() {
     TEST_ASSERT_EQUAL(0, request.parser_context.start);
     TEST_ASSERT_EQUAL(1, request.parser_context.current);
     TEST_ASSERT_EQUAL(NULL, request.method);
+    TEST_ASSERT_EQUAL(HSC_000, request.response_code);
 
     http_request_read(&request, &buffer[1], 2);
     TEST_ASSERT_EQUAL(HRS_METHOD, request.state);
@@ -47,6 +50,7 @@ void test_http_request_read_incomplete_method() {
     TEST_ASSERT_EQUAL(0, request.parser_context.start);
     TEST_ASSERT_EQUAL(3, request.parser_context.current);
     TEST_ASSERT_EQUAL(NULL, request.method);
+    TEST_ASSERT_EQUAL(HSC_000, request.response_code);
 }
 
 void test_http_request_read_method_get() {
@@ -63,6 +67,7 @@ void test_http_request_read_method_get() {
     TEST_ASSERT_EQUAL(size, request.parser_context.start);
     TEST_ASSERT_EQUAL(size, request.parser_context.current);
     TEST_ASSERT_EQUAL(request.buffer.data, request.method);
+    TEST_ASSERT_EQUAL(HSC_000, request.response_code);
 }
 
 void test_http_request_read_method_head() {
@@ -79,6 +84,7 @@ void test_http_request_read_method_head() {
     TEST_ASSERT_EQUAL(size, request.parser_context.start);
     TEST_ASSERT_EQUAL(size, request.parser_context.current);
     TEST_ASSERT_EQUAL(request.buffer.data, request.method);
+    TEST_ASSERT_EQUAL(HSC_000, request.response_code);
 }
 
 void test_http_request_read_method_unsupported() {
@@ -95,6 +101,19 @@ void test_http_request_read_method_unsupported() {
     TEST_ASSERT_EQUAL(size, request.parser_context.start);
     TEST_ASSERT_EQUAL(size, request.parser_context.current);
     TEST_ASSERT_EQUAL(request.buffer.data, request.method);
+    TEST_ASSERT_EQUAL(HSC_501, request.response_code);
+}
+
+void test_http_request_read_method_too_long() {
+    struct http_request request;
+    http_request_init(&request);
+    char buffer[] = {'R', 'I', 'Z', 'Z', 'L', 'E', 'R', ' '};
+    char method[] = "RIZZLER";
+    size_t size = sizeof(buffer) / sizeof(buffer[0]);
+
+    http_request_read(&request, buffer, size);
+    TEST_ASSERT_EQUAL(HRS_ERROR, request.state);
+    TEST_ASSERT_EQUAL(HSC_501, request.response_code);
 }
 
 void test_http_request_read_method_preeceding_space() {
@@ -107,6 +126,8 @@ void test_http_request_read_method_preeceding_space() {
     TEST_ASSERT_EQUAL(HRS_ERROR, request.state);
     // no need to read past the first character
     TEST_ASSERT_EQUAL(1, request.parser_context.current);
+    // TODO check if this is correct
+    TEST_ASSERT_EQUAL(HSC_501, request.response_code);
 }
 
 void test_http_request_read_method_preeceding_tab() {
@@ -119,6 +140,8 @@ void test_http_request_read_method_preeceding_tab() {
     TEST_ASSERT_EQUAL(HRS_ERROR, request.state);
     // no need to read past the first character
     TEST_ASSERT_EQUAL(1, request.parser_context.current);
+    // TODO check if this is correct
+    TEST_ASSERT_EQUAL(HSC_400, request.response_code);
 }
 
 void test_runner_http_request() {
@@ -127,6 +150,7 @@ void test_runner_http_request() {
     RUN_TEST(test_http_request_read_method_get);
     RUN_TEST(test_http_request_read_method_head);
     RUN_TEST(test_http_request_read_method_unsupported);
+    RUN_TEST(test_http_request_read_method_too_long);
     RUN_TEST(test_http_request_read_method_preeceding_space);
     RUN_TEST(test_http_request_read_method_preeceding_tab);
 }
